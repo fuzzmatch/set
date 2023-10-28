@@ -1,16 +1,12 @@
 package set
 
-type (
-	Set struct {
-		hash map[string]nothing
-	}
-
-	nothing struct{}
-)
+type Set[T comparable] struct {
+	hash map[T]struct{}
+}
 
 // Create a new set
-func New(initial ...string) *Set {
-	s := &Set{make(map[string]nothing)}
+func New[T comparable](initial ...T) *Set[T] {
+	s := &Set[T]{make(map[T]struct{})}
 
 	for _, v := range initial {
 		s.Insert(v)
@@ -19,103 +15,129 @@ func New(initial ...string) *Set {
 	return s
 }
 
-// Find the difference between two sets
-func (this *Set) Difference(set *Set) *Set {
-	n := make(map[string]nothing)
-
-	for k := range this.hash {
-		if _, exists := set.hash[k]; !exists {
-			n[k] = nothing{}
-		}
-	}
-
-	return &Set{n}
+func (s *Set[T]) Insert(value T) {
+	s.hash[value] = struct{}{}
 }
 
-// Call f for each item in the set
-func (this *Set) Do(f func(string)) {
-	for k, _ := range this.hash {
-		f(k)
-	}
+func (s *Set[T]) Remove(value T) {
+	delete(s.hash, value)
 }
 
-// Test to see whether or not the element is in the set
-func (this *Set) Has(element string) bool {
-	_, exists := this.hash[element]
+func (s *Set[T]) Has(value T) bool {
+	_, exists := s.hash[value]
 	return exists
 }
 
-// Add an element to the set
-func (this *Set) Insert(element string) {
-	this.hash[element] = nothing{}
+func (s *Set[T]) Len() int {
+	return len(s.hash)
 }
 
-// Find the intersection of two sets
-func (this *Set) Intersection(set *Set) *Set {
-	n := make(map[string]nothing)
+func (s *Set[T]) Elements() []T {
+	elements := make([]T, len(s.hash))
+	i := 0
+	for key := range s.hash {
+		elements[i] = key
+		i++
+	}
+	return elements
+}
 
-	for k, _ := range this.hash {
-		if _, exists := set.hash[k]; exists {
-			n[k] = nothing{}
+func (s *Set[T]) Intersection(t *Set[T]) *Set[T] {
+	var a *Set[T]
+	var b *Set[T]
+
+	if s.Len() > t.Len() {
+		a = t
+		b = s
+	} else {
+		a = s
+		b = t
+	}
+
+	intersection := New[T]()
+	for key := range a.hash {
+		if b.Has(key) {
+			intersection.Insert(key)
+		}
+	}
+	return intersection
+}
+
+func (s *Set[T]) Difference(t *Set[T]) *Set[T] {
+	difference := New[T]()
+
+	for key := range s.hash {
+		if !t.Has(key) {
+			difference.Insert(key)
 		}
 	}
 
-	return &Set{n}
+	return difference
 }
 
-// Return the number of items in the set
-func (this *Set) Len() int {
-	return len(this.hash)
+func (s *Set[T]) Union(t *Set[T]) *Set[T] {
+	var a *Set[T]
+	var b *Set[T]
+
+	if s.Len() > t.Len() {
+		a = t
+		b = s
+	} else {
+		a = s
+		b = t
+	}
+
+	union := b
+
+	for key := range a.hash {
+		union.Insert(key)
+	}
+
+	return union
 }
 
-// Test whether or not this set is a proper subset of "set"
-func (this *Set) ProperSubsetOf(set *Set) bool {
-	return this.SubsetOf(set) && this.Len() < set.Len()
-}
+func (s *Set[T]) SubsetOf(t *Set[T]) bool {
 
-// Remove an element from the set
-func (this *Set) Remove(element string) {
-	delete(this.hash, element)
-}
-
-// Test whether or not this set is a subset of "set"
-func (this *Set) SubsetOf(set *Set) bool {
-	if this.Len() > set.Len() {
+	if s.Len() > t.Len() {
 		return false
 	}
-	for k, _ := range this.hash {
-		if _, exists := set.hash[k]; !exists {
+
+	for key := range s.hash {
+		if !t.Has(key) {
 			return false
 		}
 	}
+
 	return true
 }
 
-// Find the union of two sets
-func (this *Set) Union(set *Set) *Set {
-	n := make(map[string]nothing)
-
-	for k := range this.hash {
-		n[k] = nothing{}
+func (s *Set[T]) ProperSubsetOf(t *Set[T]) bool {
+	if s.Len() == t.Len() {
+		return false
 	}
-	for k := range set.hash {
-		n[k] = nothing{}
-	}
-
-	return &Set{n}
+	return s.SubsetOf(t)
 }
 
-// Convert Set to Slice of a specific type
-func (set *Set) ToSlice() []string {
-	if set.Len() == 0 {
-		return []string{}
+func (s *Set[T]) Copy() *Set[T] {
+	copy := New[T]()
+
+	for key := range s.hash {
+		copy.Insert(key)
 	}
 
-	slice := make([]string, set.Len())
-	i := 0
-	for key := range set.hash {
-		slice[i] = key
-		i++
+	return copy
+}
+
+func (s *Set[T]) Equals(t *Set[T]) bool {
+	if s.Len() != t.Len() {
+		return false
 	}
-	return slice
+
+	for key := range s.hash {
+		if !t.Has(key) {
+			return false
+		}
+	}
+
+	return true
 }
