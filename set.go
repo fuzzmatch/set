@@ -117,6 +117,5 @@ func (set *Set) ToSlice() []string {
 		slice[i] = key
 		i++
 	}
-
 	return slice
 }
