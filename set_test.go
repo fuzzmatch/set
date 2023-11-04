@@ -14,6 +14,20 @@ func TestInsert(t *testing.T) {
 		t.Errorf("Length should be 1")
 	}
 }
+
+func TestFromSlice(t *testing.T) {
+	slice := []string{"1", "2"}
+	s := FromSlice(slice)
+
+	if s.Len() != 2 {
+		t.Error("Length should be 1, got s.Len() = ", s.Len())
+	}
+
+	if !s.Has("1") || !s.Has("2") {
+		t.Error("The Set does not contain the correct elements.")
+	}
+}
+
 func TestHas(t *testing.T) {
 	s := New[string]("5")
 

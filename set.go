@@ -15,6 +15,16 @@ func New[T comparable](initial ...T) *Set[T] {
 	return s
 }
 
+func FromSlice[T comparable](slice []T) *Set[T] {
+	s := &Set[T]{make(map[T]struct{}, len(slice))}
+
+	for _, v := range slice {
+		s.Insert(v)
+	}
+
+	return s
+}
+
 func (s *Set[T]) Insert(value T) {
 	s.hash[value] = struct{}{}
 }
